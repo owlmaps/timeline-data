@@ -1,0 +1,46 @@
+name: Update Data
+
+on:
+  schedule:
+    # run every x minutes (/5 every 5minutes)
+    - cron: '*/15 * * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch: 
+
+jobs:
+  # fetch the latest kmz & generate a data file
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: "Fetch and generate"
+        run: npm run generate:positions
+      # - name: "Commit"
+      #   uses: stefanzweifel/git-auto-commit-action@v4
+      #   with:
+      #     commit_message: "updated data file"
+      - name: Commit files
+        run: |
+            echo "Checking data on: `date`"
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "New update available"
+              git config --local user.name actions-user
+              git config --local user.email "actions@github.com"
+              git add ./data/latestposition.json
+              git commit -am "Update data - $(date '+%y%m%d_%H%M')"
+              git push origin main
+            else
+              echo "no changes to commit"
+            fi
+        env:
+          TZ: Europe/Paris

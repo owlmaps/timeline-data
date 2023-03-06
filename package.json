@@ -1,0 +1,19 @@
+{
+  "name": "timeline-data",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "generate:positions": "node scripts/positions.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@turf/turf": "^6.5.0",
+    "decompress": "^4.2.1",
+    "fast-xml-parser": "^4.1.3",
+    "node-fetch": "^3.3.0",
+    "parse2-kmz": "^1.0.7"
+  }
+}
