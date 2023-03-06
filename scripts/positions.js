@@ -87,7 +87,7 @@ export const generatePositionData = (json) => {
       // add event times used later in the leaflet timeline module
       // end will be overwritten later, default is: +1 day
       feat.properties.start = unixTimestamp;
-      feat.properties.end = unixTimestamp + (10 * 86400);
+      feat.properties.end = unixTimestamp + (1 * 86400);
       // add is this event accociated to
       feat.properties.side = who;
       // finally add the new feature to the list
