@@ -44,7 +44,7 @@ export const cleanup = () => {
 
 export const generatePositionData = (json) => {
   // init data
-  const featureList = ['ooo'];
+  const featureList = [];
   // name pattern: "[yy/mm/dd] Ua|Ru Position"
   const pattern = /\[(\d+)\/(\d+)\/(\d+)\]\s*?(?:(Ru|Ua))\s*?Position/;
   // get features or return empty result
