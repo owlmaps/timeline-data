@@ -10,6 +10,14 @@ import { centroid } from '@turf/turf';
 const TMP_FILE = 'data/latest.kmz';
 const TARGET = 'data/latestposition.json';
 
+const WANTEDAREAS = [
+  'Luhansk Axis [Z]',
+  'Donetsk Axis [Z]',
+  'Crimean Axis [Z]',
+  'Pre-War Crimea',
+  'Crimea',
+];
+
 
 export const fetchLatestKMZ = async () => {
   try {
@@ -45,6 +53,7 @@ export const cleanup = () => {
 export const generatePositionData = (json) => {
   // init data
   const featureList = [];
+  const frontline = [];
   // name pattern: "[yy/mm/dd] Ua|Ru Position"
   const pattern = /\[(\d+)\/(\d+)\/(\d+)\]\s*?(?:(Ru|Ua))\s*?Position/;
   // get features or return empty result
@@ -58,6 +67,15 @@ export const generatePositionData = (json) => {
     const { properties, geometry } = feature;
     const { name, description } = properties;
     const { type, coordinates } = geometry;
+
+    // check for important areas
+    const fixedName = name.replace(/(\r\n|\n|\r)/gm, '').replace(/\s+/g," ");
+    if (WANTEDAREAS.includes(fixedName)) {
+      frontline.push(feature);
+      // we can skip this feature now
+      return;
+    }
+
 
     // skip all non-polygon features
     if (type !== "Polygon") {
@@ -101,7 +119,10 @@ export const generatePositionData = (json) => {
     "features": featureList
   }
 
-  return finalCollection;
+  return {
+    positions: finalCollection,
+    frontline: null
+  }
 
 }
 
