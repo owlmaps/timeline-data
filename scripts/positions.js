@@ -121,7 +121,7 @@ export const generatePositionData = (json) => {
 
   return {
     positions: finalCollection,
-    frontline: null
+    frontline: frontline
   }
 
 }
