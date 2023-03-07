@@ -71,6 +71,9 @@ export const generatePositionData = (json) => {
     // check for important areas
     const fixedName = name.replace(/(\r\n|\n|\r)/gm, '').replace(/\s+/g," ");
     if (WANTEDAREAS.includes(fixedName)) {
+      // remove all styles from the feature, we will style
+      // it on the frontend
+      feature.properties = { name }; // write the name back
       frontline.push(feature);
       // we can skip this feature now
       return;
