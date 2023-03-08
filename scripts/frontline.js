@@ -149,7 +149,6 @@ const get_new = async () => {
   const currentDay = new Date();
   const yesterday = subDays(currentDay, 1);
   const currentDateKey = format(yesterday, 'yyMMdd');
-  // const currentDateKey = '230117';
 
   // get data
   const data = await getData(currentDateKey);
@@ -170,7 +169,8 @@ const rebuild = async () => {
   // each day from the archive-repo
 
   // get old data
-  const currentData = await getCurrentData();
+  // const currentData = await getCurrentData();
+  const newData = {};
 
   // define start-end
   const currentDay = new Date();
@@ -184,17 +184,18 @@ const rebuild = async () => {
   });
   for (const intervalDay of interval) {
     const dateKey = format(intervalDay, 'yyMMdd', new Date());
+    console.log(`Fetching data for ${dateKey}`);
 
     // get data
     const data = await getData(dateKey);
 
     // overwrite/add data for dateKey
-    currentData[currentDateKey] = data;
+    newData[dateKey] = data;
     
   }
 
   // save data
-  saveData(currentData);
+  saveData(newData);
 
 }
 
