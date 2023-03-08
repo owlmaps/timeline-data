@@ -51,7 +51,7 @@ export const kmz2json = async () => {
   }
 }
 
-export const getCurrentData = async () => {
+export const getOldData = async () => {
   try {
     if (fs.existsSync(DATA_FILE)) {
       const data = fs.readFileSync(DATA_FILE);
@@ -82,13 +82,23 @@ export const cleanup = () => {
   }
 }
 
-export const generateData = (json) => {
+const dateKey2UnixTimestamp = (dateKey) => {
+  const date = parse(dateKey, 'yyMMdd', new Date());
+  // reset hour, minute, second, millisecond
+  date.setHours(0);
+  date.setMinutes(0);
+  // format as timestamp (in seconds)
+  const timestamp = parseInt(format(date, 't'));
+  return timestamp;
+}
+
+export const generateData = (json, dateKey) => {
   // init data
   const frontline = [];
   // get features or return empty result
   const { features } = json;
   if (!features || !Array.isArray(features)) {
-    return featureList;
+    return frontline;
   }
   // loop over each feature
   features.forEach((feature) => {
@@ -105,7 +115,8 @@ export const generateData = (json) => {
     if (WANTEDAREAS.includes(fixedName)) {
       // remove all styles from the feature, we will style
       // it on the frontend
-      feature.properties = { name }; // write the name back
+      const unixTimestamp = dateKey2UnixTimestamp(dateKey);
+      feature.properties = { name, start: unixTimestamp }; // write the name back
       frontline.push(feature);
       // we can skip this feature now
       return;
@@ -115,7 +126,7 @@ export const generateData = (json) => {
   return frontline;
 }
 
-const getData = async (dateKey) => {
+const fetchData = async (dateKey) => {
 
   // generate fetch url
   const fetchUrl = generateKmzUrl(dateKey);
@@ -126,7 +137,7 @@ const getData = async (dateKey) => {
   // success check
   if (!wasSuccess) {
     console.log('no data available');
-    return Promise.resolve();
+    return Promise.resolve(null);
   }
 
   // parse kmz
@@ -136,7 +147,7 @@ const getData = async (dateKey) => {
   cleanup();
 
   // generate data
-  const data = generateData(json);
+  const data = generateData(json, dateKey);
 
   // return
   return data;
@@ -149,18 +160,37 @@ const get_new = async () => {
   const currentDay = new Date();
   const yesterday = subDays(currentDay, 1);
   const currentDateKey = format(yesterday, 'yyMMdd');
+  // const currentDateKey = '230210';
+  const unixTimestamp = dateKey2UnixTimestamp(currentDateKey);
 
   // get data
-  const data = await getData(currentDateKey);
+  const newData = await fetchData(currentDateKey);
+  if (!newData) {
+    return Promise.resolve();
+  }
 
   // get old data
-  const currentData = await getCurrentData();
+  const oldData = await getOldData();
 
-  // overwrite/add data for dateKey
-  currentData[currentDateKey] = data;
+  // check
+  let updatedFeatureList = [];
+  if (oldData && oldData.hasOwnProperty('features')) {
+    // filter old data & remove all features with the current dateKey
+    updatedFeatureList = oldData.features.filter((feature) => feature.properties.start !== unixTimestamp);
+  }
+  
+  // add new features to the featurelist
+  newData.map((newFeature) => {
+    updatedFeatureList.push(newFeature);
+  });
+
+  const finalCollection = {
+    "type": "FeatureCollection",
+    "features": updatedFeatureList
+  }
 
   // save data
-  saveData(currentData);
+  saveData(finalCollection);
 }
 
 
@@ -187,7 +217,7 @@ const rebuild = async () => {
     console.log(`Fetching data for ${dateKey}`);
 
     // get data
-    const data = await getData(dateKey);
+    const data = await fetchData(dateKey);
 
     // overwrite/add data for dateKey
     newData[dateKey] = data;
