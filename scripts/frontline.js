@@ -160,7 +160,7 @@ const get_new = async () => {
   const currentDay = new Date();
   const yesterday = subDays(currentDay, 1);
   const currentDateKey = format(yesterday, 'yyMMdd');
-  // const currentDateKey = '230210';
+  // const currentDateKey = '230210'; // debug
   const unixTimestamp = dateKey2UnixTimestamp(currentDateKey);
 
   // get data
@@ -200,7 +200,7 @@ const rebuild = async () => {
 
   // get old data
   // const currentData = await getCurrentData();
-  const newData = {};
+  const newFeatureList = [];
 
   // define start-end
   const currentDay = new Date();
@@ -217,15 +217,24 @@ const rebuild = async () => {
     console.log(`Fetching data for ${dateKey}`);
 
     // get data
-    const data = await fetchData(dateKey);
+    const newData = await fetchData(dateKey);
+    if (!newData) {
+      continue;
+    }
 
-    // overwrite/add data for dateKey
-    newData[dateKey] = data;
-    
+    // add new features to the featurelist
+    newData.map((newFeature) => {
+      newFeatureList.push(newFeature);
+    });    
+  }
+
+  const finalCollection = {
+    "type": "FeatureCollection",
+    "features": newFeatureList
   }
 
   // save data
-  saveData(newData);
+  saveData(finalCollection);
 
 }
 
