@@ -204,7 +204,7 @@ const rebuild = async () => {
 
   // define start-end
   const currentDay = new Date();
-  const yesterday = subDays(currentDay, 1);
+  const yesterday = subDays(currentDay, 0); // get current day too
   const currentDateKey = format(yesterday, 'yyMMdd');
   const rangeStart = parse(startDateKey, 'yyMMdd', new Date());
   const rangeEnd = parse(currentDateKey, 'yyMMdd', new Date());
