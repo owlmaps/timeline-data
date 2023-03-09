@@ -6,20 +6,36 @@ Repository to store different data files, auto-generated on a scheduled basis.
 
 `latestpositions.json`
 
-Stores all "event" locations (ua/ru positions) with their meta data and *Point* geometries.
+Stores all "event" locations (ua/ru positions) with their meta data and *Point* geometries, incl. the latest frontline layer.
 
-## scsripts
+`frontline.json`
 
-`positions`
+Stores all frontline layers since mid December (since we have backups).
 
-Downloads the latest map .kmz, filters all relevant features and converts their *Polygon* geometries to *Centroids* (*Points*).
+## scripts
+
+`generate:positions`
+
+Downloads the latest map .kmz, filters all relevant features and converts their *Polygon* geometries to *Centroids* (*Points*). Also extracts the (latest) frontline layers.
+
+`generate:frontline_new`
+
+Tries do downloads the backup .kmz for the current day and updates todays frontline.
+
+`generate:frontline_rebuild`
+
+Used locally to rebuild the whole data file.
 
 ## Workflows
 
-`update`
+`update_positions`
 
-Workflow that runs the *positions* script on a scheduled basis (every 15minutes) and commits the generated .json file if there are any changes.
+Workflow that runs the `generate:positions` script on a scheduled basis (every 15minutes) and commits the generated .json file if there are any changes.
 
-## TODO
+`update_frontline`
 
-A similar approach is planned for the frontline data. Here we need an incremential approach as we initially need every .kmz since december.
+Workflow that runs the `generate:frontline_new` script on a scheduled basis (every hour) and commits the generated .json file if there are any changes.
+
+## Notes
+
+Still some date issues with filenames in the backup.
