@@ -14,6 +14,7 @@ const WANTEDAREAS = [
   'Luhansk Axis [Z]',
   'Donetsk Axis [Z]',
   'Crimean Axis [Z]',
+  'Zaporizhia and Kherson Axis [Z]',
   'Pre-War Crimea',
   'Crimea',
 ];
