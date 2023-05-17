@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { once } from 'node:events';
-
+import { fileTypeFromFile } from 'file-type';
 import fetch from 'node-fetch';
 import parseKMZ from 'parse2-kmz';
 import { centroid } from '@turf/turf';
@@ -25,6 +25,7 @@ export const fetchLatestKMZ = async () => {
     const stream = fs.createWriteStream(TMP_FILE);
     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
     const response = await fetch(url);
+		//console.log(response.headers)
     response.body.pipe(stream);
     await once(stream, 'finish');
   } catch (error) {
@@ -34,7 +35,12 @@ export const fetchLatestKMZ = async () => {
 
 export const kmz2json = async () => {
   try {
-    return await parseKMZ.toJson(TMP_FILE);
+		const { ext, mime } = await fileTypeFromFile(TMP_FILE);
+		if (ext === 'zip' && mime === 'application/zip') {
+			return await parseKMZ.toJson(TMP_FILE);
+		} else {
+			throw Error('wrong ext or mime', ext, mime);
+		}
   } catch (error) {
     cleanup();
     throw Error(error);

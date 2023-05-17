@@ -18,5 +18,8 @@
     "minimist": "^1.2.8",
     "node-fetch": "^3.3.0",
     "parse2-kmz": "^1.0.7"
+  },
+  "dependencies": {
+    "file-type": "^18.4.0"
   }
 }
