@@ -52,6 +52,10 @@ const fetchLatestKMZ = async () => {
     let attempts = 0;
     while(true) {
       attempts += 1;
+      if (attempts > 10) {
+        console.log(`max # of attempts - exit`);
+        break;
+      }      
       console.log(`fetch attempt #${attempts}`);
       const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
       await fetch(url).then(res => new Promise((resolve, reject) => {
@@ -60,13 +64,16 @@ const fetchLatestKMZ = async () => {
         dest.on('close', () => resolve());
         dest.on('error', reject);
       }));
-      const { ext, mime } = await fileTypeFromFile(TMP_FILE);
+      const ftype = await fileTypeFromFile(TMP_FILE);
+      if (!ftype) {
+        continue;
+      }
       if (ext === 'zip' && mime === 'application/zip') {
-        break;        
+        break;  
+      } else {
+        continue;
       }
-      if (attempts >= 10) {
-        break;
-      }
+
     }    
   } catch (error) {
     
