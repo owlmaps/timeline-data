@@ -57,7 +57,7 @@ export const kmz2json = async () => {
 			throw Error('wrong ext or mime', ext, mime);
 		}
   } catch (error) {
-    cleanup();
+    // cleanup();
     throw Error(error);
   }
 }
@@ -163,7 +163,7 @@ const saveData = (data) => {
 (async () => {
   await fetchLatestKMZ();
   const json = await kmz2json();
-  cleanup(); // final cleanup
+  // cleanup(); // final cleanup
   const data = generatePositionData(json);
   // console.log(`Write Data to ${TARGET} - got ${data.features.length} features`)
   saveData(data);
