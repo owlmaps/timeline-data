@@ -1,9 +1,7 @@
 import fs from 'node:fs';
 import { once } from 'node:events';
-import { fileTypeFromFile } from 'file-type';
 import fetch from 'node-fetch';
 import got from 'got';
-import {fileTypeFromStream} from 'file-type';
 import parseKMZ from 'parse2-kmz';
 import { centroid } from '@turf/turf';
 
@@ -59,6 +57,16 @@ export const fetchLatestKMZ2 = async () => {
     const stream = got.stream(url);
     stream.pipe(write);
     await once(write, 'finish');
+  } catch (error) {
+    cleanup();
+    throw Error(error);
+  }
+}
+export const fetchLatestKMZ3 = async () => {
+  try {
+    const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+    const response = await got.get(url).buffer();
+    fs.writeFileSync(TMP_FILE, response);
   } catch (error) {
     cleanup();
     throw Error(error);
@@ -186,7 +194,7 @@ const saveData = (data) => {
 
 (async () => {
   // await getLatest();
-  await fetchLatestKMZ2();
+  await fetchLatestKMZ3();
   const json = await kmz2json();
   cleanup(); // final cleanup
   const data = generatePositionData(json);
