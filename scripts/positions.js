@@ -52,6 +52,7 @@ const fetchLatestKMZ = async () => {
     let attempts = 0;
     while(true) {
       attempts += 1;
+      console.log(`fetch attempt #${attempts}`);
       const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
       await fetch(url).then(res => new Promise((resolve, reject) => {
         const dest = fs.createWriteStream(TMP_FILE);
