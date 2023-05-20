@@ -33,17 +33,42 @@ const WANTEDAREAS = [
 //   }
 // }
 
-export const fetchLatestKMZ = async () => {
+// export const fetchLatestKMZ = async () => {
+//   try {
+//     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+//     await fetch(url).then(res => new Promise((resolve, reject) => {
+//       const dest = fs.createWriteStream(TMP_FILE);
+//       res.body.pipe(dest);
+//       dest.on('close', () => resolve());
+//       dest.on('error', reject);
+//     }));
+//   } catch (error) {
+//     throw Error(error);
+//   }
+// }
+
+const fetchLatestKMZ = async () => {
   try {
-    const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-    await fetch(url).then(res => new Promise((resolve, reject) => {
-      const dest = fs.createWriteStream(TMP_FILE);
-      res.body.pipe(dest);
-      dest.on('close', () => resolve());
-      dest.on('error', reject);
-    }));
+    let attempts = 0;
+    while(true) {
+      attempts += 1;
+      const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+      await fetch(url).then(res => new Promise((resolve, reject) => {
+        const dest = fs.createWriteStream(TMP_FILE);
+        res.body.pipe(dest);
+        dest.on('close', () => resolve());
+        dest.on('error', reject);
+      }));
+      const { ext, mime } = await fileTypeFromFile(TMP_FILE);
+      if (ext === 'zip' && mime === 'application/zip') {
+        break;        
+      }
+      if (attempts >= 10) {
+        break;
+      }
+    }    
   } catch (error) {
-    throw Error(error);
+    
   }
 }
 
@@ -158,6 +183,8 @@ const saveData = (data) => {
     throw Error(error);
   }
 }
+
+
 
 
 (async () => {
