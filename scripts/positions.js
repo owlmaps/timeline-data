@@ -54,12 +54,16 @@ export const fetchLatestKMZ = async () => {
 export const kmz2json = async () => {
   console.log('kmz2json')
   try {
-		const { ext, mime } = await fileTypeFromFile(TMP_FILE);
-		if (ext === 'zip' && mime === 'application/zip') {
-			return await parseKMZ.toJson(TMP_FILE);
-		} else {
-			throw Error('wrong ext or mime', ext, mime);
-		}
+    if (fs.existsSync(TMP_FILE)) {
+      const { ext, mime } = await fileTypeFromFile(TMP_FILE);
+      if (ext === 'zip' && mime === 'application/zip') {
+        return await parseKMZ.toJson(TMP_FILE);
+      } else {
+        throw Error('wrong ext or mime', ext, mime);
+      }
+    } else {
+      throw Error('tmp file does not exist');
+    }
   } catch (error) {
     // cleanup();
     throw Error(error);
