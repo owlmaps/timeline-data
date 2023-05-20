@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { once } from 'node:events';
+// import { once } from 'node:events';
 import { fileTypeFromFile } from 'file-type';
 import fetch from 'node-fetch';
 import parseKMZ from 'parse2-kmz';
@@ -20,20 +20,35 @@ const WANTEDAREAS = [
 ];
 
 
+// export const fetchLatestKMZ = async () => {
+//   try {
+//     const stream = fs.createWriteStream(TMP_FILE);
+//     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+//     const response = await fetch(url);
+// 		//console.log(response.headers)
+//     response.body.pipe(stream);
+//     await once(stream, 'finish');
+//   } catch (error) {
+//     throw Error(error);
+//   }
+// }
+
 export const fetchLatestKMZ = async () => {
   try {
-    const stream = fs.createWriteStream(TMP_FILE);
     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-    const response = await fetch(url);
-		//console.log(response.headers)
-    response.body.pipe(stream);
-    await once(stream, 'finish');
+    await fetch(url).then(res => new Promise((resolve, reject) => {
+      const dest = fs.createWriteStream(TMP_FILE);
+      res.body.pipe(dest);
+      dest.on('close', () => resolve());
+      dest.on('error', reject);
+    }));
   } catch (error) {
     throw Error(error);
   }
 }
 
 export const kmz2json = async () => {
+  console.log('kmz2json')
   try {
 		const { ext, mime } = await fileTypeFromFile(TMP_FILE);
 		if (ext === 'zip' && mime === 'application/zip') {
