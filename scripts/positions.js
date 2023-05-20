@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-// import { once } from 'node:events';
+import { once } from 'node:events';
 import { fileTypeFromFile } from 'file-type';
 import fetch from 'node-fetch';
 import parseKMZ from 'parse2-kmz';
@@ -20,63 +20,34 @@ const WANTEDAREAS = [
 ];
 
 
-// export const fetchLatestKMZ = async () => {
-//   try {
-//     const stream = fs.createWriteStream(TMP_FILE);
-//     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-//     const response = await fetch(url);
-// 		//console.log(response.headers)
-//     response.body.pipe(stream);
-//     await once(stream, 'finish');
-//   } catch (error) {
-//     throw Error(error);
-//   }
-// }
-
-// export const fetchLatestKMZ = async () => {
-//   try {
-//     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-//     await fetch(url).then(res => new Promise((resolve, reject) => {
-//       const dest = fs.createWriteStream(TMP_FILE);
-//       res.body.pipe(dest);
-//       dest.on('close', () => resolve());
-//       dest.on('error', reject);
-//     }));
-//   } catch (error) {
-//     throw Error(error);
-//   }
-// }
-
-const fetchLatestKMZ = async () => {
-  try {
-    let attempts = 0;
-    while(true) {
-      attempts += 1;
-      if (attempts > 10) {
-        console.log(`max # of attempts - exit`);
-        break;
-      }      
-      console.log(`fetch attempt #${attempts}`);
-      const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-      await fetch(url).then(res => new Promise((resolve, reject) => {
-        const dest = fs.createWriteStream(TMP_FILE);
-        res.body.pipe(dest);
-        dest.on('close', () => resolve());
-        dest.on('error', reject);
-      }));
-      const ftype = await fileTypeFromFile(TMP_FILE);
-      if (!ftype) {
-        continue;
-      }
-      if (ext === 'zip' && mime === 'application/zip') {
-        break;  
-      } else {
-        continue;
-      }
-
+export const getLatest = async () => {
+  let attempts = 0;
+  while (true) {
+    attempts += 1;
+    if (attempts > 10) {
+      console.log(`max # of attempts - exit`);
+      break;
     }    
+    console.log(`attempt #${attempts} to fetch data`);
+    await fetchLatestKMZ();
+    if (fs.existsSync(TMP_FILE)) {
+      console.log(`${TMP_FILE} exists, continue`);
+      break;
+    }
+  }
+}
+
+export const fetchLatestKMZ = async () => {
+  try {
+    const stream = fs.createWriteStream(TMP_FILE);
+    const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+    const response = await fetch(url);
+		//console.log(response.headers)
+    response.body.pipe(stream);
+    await once(stream, 'finish');
   } catch (error) {
-    
+    cleanup();
+    throw Error(error);
   }
 }
 
@@ -196,7 +167,7 @@ const saveData = (data) => {
 
 
 (async () => {
-  await fetchLatestKMZ();
+  await getLatest();
   const json = await kmz2json();
   // cleanup(); // final cleanup
   const data = generatePositionData(json);
