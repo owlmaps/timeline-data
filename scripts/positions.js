@@ -65,7 +65,12 @@ export const fetchLatestKMZ2 = async () => {
 export const fetchLatestKMZ3 = async () => {
   try {
     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-    const response = await got.get(url).buffer();
+    const options = {
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0'
+      }
+    }
+    const response = await got.get(url, options).buffer();
     fs.writeFileSync(TMP_FILE, response);
   } catch (error) {
     cleanup();
