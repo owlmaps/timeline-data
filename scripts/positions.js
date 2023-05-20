@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import { once } from 'node:events';
 import { fileTypeFromFile } from 'file-type';
 import fetch from 'node-fetch';
+import got from 'got';
+import {fileTypeFromStream} from 'file-type';
 import parseKMZ from 'parse2-kmz';
 import { centroid } from '@turf/turf';
 
@@ -45,6 +47,18 @@ export const fetchLatestKMZ = async () => {
 		//console.log(response.headers)
     response.body.pipe(stream);
     await once(stream, 'finish');
+  } catch (error) {
+    cleanup();
+    throw Error(error);
+  }
+}
+export const fetchLatestKMZ2 = async () => {
+  try {
+    const write = fs.createWriteStream(TMP_FILE);
+    const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+    const stream = got.stream(url);
+    stream.pipe(write);
+    await once(write, 'finish');
   } catch (error) {
     cleanup();
     throw Error(error);
@@ -171,9 +185,10 @@ const saveData = (data) => {
 
 
 (async () => {
-  await getLatest();
+  // await getLatest();
+  await fetchLatestKMZ2();
   const json = await kmz2json();
-  // cleanup(); // final cleanup
+  cleanup(); // final cleanup
   const data = generatePositionData(json);
   // console.log(`Write Data to ${TARGET} - got ${data.features.length} features`)
   saveData(data);
