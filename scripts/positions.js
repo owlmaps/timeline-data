@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { once } from 'node:events';
-
 import fetch from 'node-fetch';
+import got from 'got';
 import parseKMZ from 'parse2-kmz';
 import { centroid } from '@turf/turf';
 
@@ -20,6 +20,23 @@ const WANTEDAREAS = [
 ];
 
 
+export const getLatest = async () => {
+  let attempts = 0;
+  while (true) {
+    attempts += 1;
+    if (attempts > 10) {
+      console.log(`max # of attempts - exit`);
+      break;
+    }    
+    console.log(`attempt #${attempts} to fetch data`);
+    await fetchLatestKMZ();
+    if (fs.existsSync(TMP_FILE)) {
+      console.log(`${TMP_FILE} exists, continue`);
+      break;
+    }
+  }
+}
+
 export const fetchLatestKMZ = async () => {
   try {
     const stream = fs.createWriteStream(TMP_FILE);
@@ -27,18 +44,58 @@ export const fetchLatestKMZ = async () => {
     const response = await fetch(url, {
       referrer: 'https://owlunits.com/',
     });
+		//console.log(response.headers)
     response.body.pipe(stream);
     await once(stream, 'finish');
   } catch (error) {
+    cleanup();
+    throw Error(error);
+  }
+}
+export const fetchLatestKMZ2 = async () => {
+  try {
+    const write = fs.createWriteStream(TMP_FILE);
+    const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+    const stream = got.stream(url);
+    stream.pipe(write);
+    await once(write, 'finish');
+  } catch (error) {
+    cleanup();
+    throw Error(error);
+  }
+}
+export const fetchLatestKMZ3 = async () => {
+  try {
+    const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
+    const options = {
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
+        'referrer': 'https://owlunits.com/',
+      }
+    }
+    const response = await got.get(url, options).buffer();
+    fs.writeFileSync(TMP_FILE, response);
+  } catch (error) {
+    cleanup();
     throw Error(error);
   }
 }
 
 export const kmz2json = async () => {
+  console.log('kmz2json')
   try {
-    return await parseKMZ.toJson(TMP_FILE);
+    if (fs.existsSync(TMP_FILE)) {
+      const { ext, mime } = await fileTypeFromFile(TMP_FILE);
+      if (ext === 'zip' && mime === 'application/zip') {
+        return await parseKMZ.toJson(TMP_FILE);
+      } else {
+        throw Error('wrong ext or mime', ext, mime);
+      }
+    } else {
+      throw Error('tmp file does not exist');
+    }
   } catch (error) {
-    cleanup();
+    // cleanup();
     throw Error(error);
   }
 }
@@ -141,8 +198,11 @@ const saveData = (data) => {
 }
 
 
+
+
 (async () => {
-  await fetchLatestKMZ();
+  // await getLatest();
+  await fetchLatestKMZ3();
   const json = await kmz2json();
   cleanup(); // final cleanup
   const data = generatePositionData(json);
