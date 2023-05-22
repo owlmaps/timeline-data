@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import { once } from 'node:events';
 import fetch from 'node-fetch';
-import got from 'got';
+import got, {Options} from 'got';
 import parseKMZ from 'parse2-kmz';
 import { centroid } from '@turf/turf';
+import { fileTypeFromFile} from 'file-type';
 
 
 // constants
@@ -56,7 +57,13 @@ export const fetchLatestKMZ2 = async () => {
   try {
     const write = fs.createWriteStream(TMP_FILE);
     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-    const stream = got.stream(url);
+    const options = new Options({
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
+        'Referer': 'https://owlunits.com/',
+      }
+    });
+    const stream = got.stream(url, options);
     stream.pipe(write);
     await once(write, 'finish');
   } catch (error) {
@@ -67,12 +74,12 @@ export const fetchLatestKMZ2 = async () => {
 export const fetchLatestKMZ3 = async () => {
   try {
     const url = "https://www.google.com/maps/d/u/0/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez";
-    const options = {
+    const options = new Options({
       headers: {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
-        'referrer': 'https://owlunits.com/',
+        'Referer': 'https://owlunits.com/',
       }
-    }
+    });
     const response = await got.get(url, options).buffer();
     fs.writeFileSync(TMP_FILE, response);
   } catch (error) {
