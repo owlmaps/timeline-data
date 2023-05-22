@@ -49,7 +49,7 @@ export const fetchLatestKMZ = async () => {
     response.body.pipe(stream);
     await once(stream, 'finish');
   } catch (error) {
-    cleanup();
+    //cleanup();
     throw Error(error);
   }
 }
