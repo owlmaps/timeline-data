@@ -208,8 +208,8 @@ const saveData = (data) => {
 
 
 (async () => {
-  // await getLatest();
-  await fetchLatestKMZ3();
+  await getLatest();
+  //await fetchLatestKMZ();
   const json = await kmz2json();
   cleanup(); // final cleanup
   const data = generatePositionData(json);
