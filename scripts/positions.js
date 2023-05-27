@@ -142,7 +142,7 @@ const downloadLatest = async () => {
         isError = false;
       } else {
         console.log('response not ok', response.status);
-        console.log(response.headers)
+        // console.log(response.headers)
         isError = true;
       }   
       
@@ -150,13 +150,14 @@ const downloadLatest = async () => {
       console.log(error);
       isError = true;
     } finally {
-      console.log('finally');
+      // console.log('finally');
       if (!isError) {
         break;
       }    
     }
 
     // wait before next attempt
+    console.log('wait 30s before next attempt')
     await sleep(30000); // 30s
   }
 
