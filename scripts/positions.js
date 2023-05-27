@@ -139,6 +139,7 @@ const downloadLatest = async () => {
       const response = await fetch(KMZ_URL);
       if (response.ok) {
         await streamPipeline(response.body, fs.createWriteStream(TMP_FILE));
+        isError = false;
       } else {
         console.log('response not ok', response.status);
         console.log(response.headers)
