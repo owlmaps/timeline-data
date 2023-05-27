@@ -153,7 +153,7 @@ const downloadLatest = async () => {
       // console.log('finally');
       if (!isError || i === NUM_ATTEMPTS) {
         break;
-      }    
+      }
     }
 
     // wait before next attempt
@@ -165,6 +165,9 @@ const downloadLatest = async () => {
 
 const kmz2json = async () => {
   try {
+    if (!fs.existsSync(TMP_FILE)) {
+      return { json: null, error: true }
+    }
     const json = await parseKMZ.toJson(TMP_FILE);
     return { json, error: false }
   } catch (error) {
