@@ -1,9 +1,9 @@
 name: Update Latest Position Data
 
 on:
-  #schedule:
+  schedule:
     # run every x minutes (/5 every 5minutes)
-    #- cron: '*/15 * * * *'
+    - cron: '*/15 * * * *'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch: 
 
