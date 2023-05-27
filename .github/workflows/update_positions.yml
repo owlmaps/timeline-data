@@ -15,12 +15,11 @@ permissions:
 jobs:
   # fetch the latest kmz & generate a data file
   update:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
+
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
