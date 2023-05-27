@@ -151,7 +151,7 @@ const downloadLatest = async () => {
       isError = true;
     } finally {
       // console.log('finally');
-      if (!isError) {
+      if (!isError || i === NUM_ATTEMPTS) {
         break;
       }    
     }
