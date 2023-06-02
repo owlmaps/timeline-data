@@ -8,7 +8,7 @@ import { centroid } from '@turf/turf';
 
 
 // constants
-const NUM_ATTEMPTS = 20;
+const NUM_ATTEMPTS = 30;
 const KMZ_URL = 'https://www.google.com/maps/d/kml?mid=180u1IkUjtjpdJWnIC0AxTKSiqK4G6Pez';
 const TMP_FILE = 'data/latest.kmz';
 const TARGET = 'data/latestposition.json';
