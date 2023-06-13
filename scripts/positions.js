@@ -43,6 +43,10 @@ export const generatePositionData = (json) => {
     const { properties, geometry } = feature;
     const { name, description } = properties;
     const { type, coordinates } = geometry;
+		
+		// skip all without a name (fortifiction layer most likely)
+		if (!name) {
+			return;
 
     // check for important areas
     const fixedName = name.replace(/(\r\n|\n|\r)/gm, '').replace(/\s+/g," ");
