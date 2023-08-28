@@ -20,6 +20,8 @@ const WANTEDAREAS = [
   'Pre-War Crimea',
   'Crimea',
 ];
+const FRONTLINEKEY = "Frontline";
+const FORTIFICATIONKEY = "Fortifications";
 
 
 
@@ -30,6 +32,7 @@ export const generatePositionData = (json) => {
   // init data
   const featureList = [];
   const frontline = [];
+  const fortifications = [];
   // name pattern: "[yy/mm/dd] Ua|Ru Position"
   const pattern = /\[(\d+)\/(\d+)\/(\d+)\]\s*?(?:(Ru|Ua))\s*?Position/;
   // get features or return empty result
@@ -51,12 +54,26 @@ export const generatePositionData = (json) => {
 
     // check for important areas
     const fixedName = name.replace(/(\r\n|\n|\r)/gm, '').replace(/\s+/g," ");
-    if (WANTEDAREAS.includes(fixedName)) {
-      // remove all styles from the feature, we will style
-      // it on the frontend
-      feature.properties = { name }; // write the name back
+    // if (WANTEDAREAS.includes(fixedName)) {
+    //   // remove all styles from the feature, we will style
+    //   // it on the frontend
+    //   feature.properties = { name }; // write the name back
+    //   frontline.push(feature);
+    //   // we can skip this feature now
+    //   return;
+    // }
+
+    // save Frontline
+    if (FRONTLINEKEY == fixedName) {
+      feature.properties = { name };
       frontline.push(feature);
-      // we can skip this feature now
+      return;
+    }
+
+    // save Fortifications
+    if (FORTIFICATIONKEY == fixedName) {
+      feature.properties = { name };
+      fortifications.push(feature);
       return;
     }
 
@@ -105,7 +122,8 @@ export const generatePositionData = (json) => {
 
   return {
     positions: finalCollection,
-    frontline: frontline
+    frontline: frontline,
+    fortifications: fortifications
   }
 
 }
