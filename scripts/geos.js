@@ -73,7 +73,6 @@ export const generateGeosData = (json) => {
       return;
     }
 
-console.log(name)
     // check for postion pattern in name property
     const match = name.match(pattern);
 
