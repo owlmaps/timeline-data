@@ -220,7 +220,7 @@ const kmz2json = async () => {
   if (error ||json === null) {
     return;
   }
-  // cleanup(); // remove tmp file
+  cleanup(); // remove tmp file
   const data = generateGeosData(json);
   // console.log(data)
   // console.log(`Write Data to ${TARGET} - got ${data.positions.features.length} features`)
