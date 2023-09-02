@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "generate:positions": "node scripts/positions.js",
+    "generate:positions": "node scripts/geos.js",
     "generate:test": "node scripts/test.js",
     "generate:frontline_new": "node scripts/frontline.js --action=new",
     "generate:frontline_rebuild": "node scripts/frontline.js --action=rebuild"

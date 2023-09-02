@@ -23,3 +23,5 @@ node_modules
 /public
 /resources/_gen/
 /assets/jsconfig.json
+/data/latest.kmz
+/data/latestposition.json
