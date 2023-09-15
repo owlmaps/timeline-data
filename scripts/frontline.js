@@ -1,69 +1,65 @@
-import path from 'node:path';
 import fs from 'node:fs';
 import { once } from 'node:events';
-import minimist from 'minimist'
-import fetch from 'node-fetch';
+import https from 'node:https';
+import minimist from 'minimist';
 import { format, parse, eachDayOfInterval, subDays } from 'date-fns';
 import parseKMZ from 'parse2-kmz';
 
-// constants
-const startDateKey = '221209'; // yymmdd
+
+const REPO_LIST_URL = "https://api.github.com/repos/owlmaps/UAControlMapBackups/contents/";
 const TMP_FILE = 'data/tmp.kmz';
+const FRONTLINE_START_DATE = '230825';
+const FRONTLINEKEY = "Frontline";
 const DATA_FILE = 'data/frontline.json';
-const OWLMAP_BACKUP_REPO_URL = 'https://raw.githubusercontent.com/owlmaps/UAControlMapBackups/master/';
 
-const WANTEDAREAS = [
-  'Luhansk Axis [Z]',
-  'Donetsk Axis [Z]',
-  'Crimean Axis [Z]',
-  'Zaporizhia and Kherson Axis [Z]',
-  'Pre-War Crimea',
-  'Crimea',
-];
+const update = async () => {}
 
+const build = async () => {
+  // first day of frontline data
+  const startDateKey = FRONTLINE_START_DATE; // yymmdd
+  // current day
+  const currentDay = new Date();
+  const currentDateKey = format(currentDay, 'yyMMdd');
+  // set range & interval
+  const rangeStart = parse(startDateKey, 'yyMMdd', new Date());
+  const rangeEnd = parse(currentDateKey, 'yyMMdd', new Date());
+  const interval = eachDayOfInterval({
+    start: rangeStart,
+    end: rangeEnd
+  });
 
-const generateKmzUrl = (dateKey) => {
-  return path.join(OWLMAP_BACKUP_REPO_URL, `${dateKey}_0000.kmz`);
+  // get repo listing
+  const repoFiles = await getRepoListing();
+  // console.log(repoFiles);
+
+  const frontlineAll = [];
+
+  // loop through each day
+  for (const intervalDay of interval) {
+
+    // dateKey for loop day
+    const dateKey = format(intervalDay, 'yyMMdd', new Date());
+    console.log(`Fetching data for ${dateKey}`);
+
+    // find corresponding kmz file in the repo listing
+    const repoFileData = getRepoFileData(repoFiles, dateKey);
+    // console.log(repoFileData);
+    const data = await fetchData(repoFileData);
+    console.log(data.features.length);
+
+    // extract frontline data
+    const frontlineData = extractFrontlinedata(data);
+    frontlineAll.push({
+      dateKey,
+      data: frontlineData
+    });
+  
+  }  
+
+  saveData(frontlineAll);
+
 }
 
-export const fetchKMZ = async (url) => {
-  try {
-    const response = await fetch(url);
-    if (response.status === 404) {
-      console.log(`404 fetch error - ${url}`);
-      return false;
-    }
-    const stream = fs.createWriteStream(TMP_FILE);
-    response.body.pipe(stream);
-    await once(stream, 'finish');
-  } catch (error) {
-    console.log('not found');
-    throw Error(error);
-  }
-  return true;
-}
-
-export const kmz2json = async () => {
-  try {
-    return await parseKMZ.toJson(TMP_FILE);
-  } catch (error) {
-    cleanup();
-    throw Error(error);
-  }
-}
-
-export const getOldData = async () => {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const data = fs.readFileSync(DATA_FILE);
-      return await JSON.parse(data);
-    } else {
-      return Promise.resolve({});
-    }
-  } catch (error) {
-    throw Error(error);
-  }
-}
 
 const saveData = (data) => {
   try {
@@ -73,7 +69,88 @@ const saveData = (data) => {
   }
 }
 
-export const cleanup = () => {
+const getRepoListing = async () => {
+  try {
+    const response = await fetch(REPO_LIST_URL);
+    const listing = await response.json();
+    return listing;
+  } catch (error) {
+    console.log('not found');
+    throw Error(error);
+  }   
+}
+
+const getRepoFileData = (repoFiles, dateKey) => {
+  let repoFileData = null;
+  for (let i = 0; i < repoFiles.length; i++) {
+    const repoFile = repoFiles[i];
+    if (repoFile.name.startsWith(`${dateKey}_`)) {
+      repoFileData = repoFile;
+      break;
+    }  
+  }
+  return repoFileData;
+}
+
+const fetchData = async (repoFileData) => {
+
+  const url = repoFileData.download_url;
+
+  // fetch the kmz, write to tmp file
+  await fetchKMZ(url);
+
+  // parse kmz
+  const json = await kmz2json();
+
+  // cleanup
+  cleanup();
+
+  // return
+  return json;
+}
+
+const fetchKMZ = async (url) => {  
+  return await new Promise((resolve, reject) => {
+    https.get(url, response => {
+      const code = response.statusCode ?? 0
+
+      if (code >= 400) {
+        return reject(new Error(response.statusMessage))
+      }
+
+      // handle redirects
+      if (code > 300 && code < 400 && !!response.headers.location) {
+        return resolve(
+          downloadFile(response.headers.location, TMP_FILE)
+        )
+      }
+
+      // save the file to disk
+      const fileWriter = fs
+        .createWriteStream(TMP_FILE)
+        .on('finish', () => {
+          resolve({})
+        })
+
+      response.pipe(fileWriter)
+    }).on('error', error => {
+      reject(error)
+    })
+  })
+}
+
+const kmz2json = async () => {
+  try {
+    const data = await parseKMZ.toJson(TMP_FILE);
+    return data;
+  } catch (error) {
+    cleanup();
+    // throw Error(error);
+    return {}
+  }
+}
+
+const cleanup = () => {
   try {
     if (fs.existsSync(TMP_FILE)) {
       fs.unlinkSync(TMP_FILE);
@@ -83,24 +160,15 @@ export const cleanup = () => {
   }
 }
 
-const dateKey2UnixTimestamp = (dateKey) => {
-  const date = parse(dateKey, 'yyMMdd', new Date());
-  // reset hour, minute, second, millisecond
-  date.setHours(0);
-  date.setMinutes(0);
-  // format as timestamp (in seconds)
-  const timestamp = parseInt(format(date, 't'));
-  return timestamp;
-}
-
-export const generateData = (json, dateKey) => {
-  // init data
+const extractFrontlinedata = (data) => {
   const frontline = [];
-  // get features or return empty result
-  const { features } = json;
+
+  const { features } = data;
+
   if (!features || !Array.isArray(features)) {
     return frontline;
   }
+
   // loop over each feature
   features.forEach((feature) => {
   
@@ -111,147 +179,37 @@ export const generateData = (json, dateKey) => {
       return;
     }
 
-    // check for important areas
     const fixedName = name.replace(/(\r\n|\n|\r)/gm, '').replace(/\s+/g," ");
-    if (WANTEDAREAS.includes(fixedName)) {
-      // remove all styles from the feature, we will style
-      // it on the frontend
-      const unixTimestamp = dateKey2UnixTimestamp(dateKey);
-      feature.properties = { name, start: unixTimestamp }; // write the name back
+
+    // save Frontline
+    if (FRONTLINEKEY == fixedName) {
+      feature.properties = { name };
       frontline.push(feature);
-      // we can skip this feature now
       return;
     }
+
   });
-  // return data
+
   return frontline;
+
+
 }
 
-const fetchData = async (dateKey) => {
-
-  // generate fetch url
-  const fetchUrl = generateKmzUrl(dateKey);
-
-  // fetch the kmz, write to tmp file
-  const wasSuccess = await fetchKMZ(fetchUrl);
-
-  // success check
-  if (!wasSuccess) {
-    console.log('no data available');
-    return Promise.resolve(null);
-  }
-
-  // parse kmz
-  const json = await kmz2json();
-
-  // cleanup
-  cleanup();
-
-  // generate data
-  const data = generateData(json, dateKey);
-
-  // return
-  return data;
-}
-
-
-const get_new = async () => {
-
-  // generate the date key (we need yesterdays day here)
-  const currentDay = new Date();
-  const yesterday = subDays(currentDay, 1);
-  const currentDateKey = format(yesterday, 'yyMMdd');
-  // const currentDateKey = '230210'; // debug
-  const unixTimestamp = dateKey2UnixTimestamp(currentDateKey);
-
-  // get data
-  const newData = await fetchData(currentDateKey);
-  if (!newData) {
-    return Promise.resolve();
-  }
-
-  // get old data
-  const oldData = await getOldData();
-
-  // check
-  let updatedFeatureList = [];
-  if (oldData && oldData.hasOwnProperty('features')) {
-    // filter old data & remove all features with the current dateKey
-    updatedFeatureList = oldData.features.filter((feature) => feature.properties.start !== unixTimestamp);
-  }
-  
-  // add new features to the featurelist
-  newData.map((newFeature) => {
-    updatedFeatureList.push(newFeature);
-  });
-
-  const finalCollection = {
-    "type": "FeatureCollection",
-    "features": updatedFeatureList
-  }
-
-  // save data
-  saveData(finalCollection);
-}
-
-
-const rebuild = async () => {
-  // rebuild all by fetching data for
-  // each day from the archive-repo
-
-  // get old data
-  // const currentData = await getCurrentData();
-  const newFeatureList = [];
-
-  // define start-end
-  const currentDay = new Date();
-  const yesterday = subDays(currentDay, 0); // get current day too
-  const currentDateKey = format(yesterday, 'yyMMdd');
-  const rangeStart = parse(startDateKey, 'yyMMdd', new Date());
-  const rangeEnd = parse(currentDateKey, 'yyMMdd', new Date());
-  const interval = eachDayOfInterval({
-    start: rangeStart,
-    end: rangeEnd
-  });
-  for (const intervalDay of interval) {
-    const dateKey = format(intervalDay, 'yyMMdd', new Date());
-    console.log(`Fetching data for ${dateKey}`);
-
-    // get data
-    const newData = await fetchData(dateKey);
-    if (!newData) {
-      continue;
-    }
-
-    // add new features to the featurelist
-    newData.map((newFeature) => {
-      newFeatureList.push(newFeature);
-    });    
-  }
-
-  const finalCollection = {
-    "type": "FeatureCollection",
-    "features": newFeatureList
-  }
-
-  // save data
-  saveData(finalCollection);
-
-}
 
 
 (async () => {
   // parse args
   const args = minimist(process.argv.slice(2));
-  // depending on the action we run different code
+
   switch (args.action) {
-    case 'new':
-      await get_new();
+    case 'update':
+      await update();
       break;
-    case 'rebuild':
-      await rebuild()
+    case 'build':
+      await build()
       break;  
     default:
       break;
   }
+
 })()

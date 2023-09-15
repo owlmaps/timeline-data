@@ -16,6 +16,7 @@ const TARGET = 'data/latestposition.json';
 // Frontline & Fortification Keys
 const FRONTLINEKEY = "Frontline";
 const FORTIFICATIONKEY = "Fortifications";
+const DRAGONTEETHKEY = "Dragon Teeth";
 
 
 
@@ -28,6 +29,7 @@ export const generateGeosData = (json) => {
   const featureList = [];
   const frontline = [];
   const fortifications = [];
+  const dragonteeth = [];
 
   // name pattern: "[yy/mm/dd] Ua|Ru Position" - needed for old geos
   const pattern = /\[(\d+)\/(\d+)\/(\d+)\]\s*?(?:(Ru|Ua))\s*?Position/;
@@ -66,6 +68,13 @@ export const generateGeosData = (json) => {
       fortifications.push(feature);
       return;
     }
+
+    // save Dragon Teeth
+    if (DRAGONTEETHKEY == fixedName) {
+      feature.properties = { name };
+      dragonteeth.push(feature);
+      return;
+    }    
 
  
     // skip all non polygon/point features
@@ -132,7 +141,8 @@ export const generateGeosData = (json) => {
   return {
     positions: finalCollection,
     frontline: frontline,
-    fortifications: fortifications
+    fortifications: fortifications,
+    dragonteeth: dragonteeth,
   }
 
 }

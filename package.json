@@ -6,14 +6,15 @@
   "type": "module",
   "scripts": {
     "generate:positions": "node scripts/geos.js",
-    "generate:test": "node scripts/test.js",
-    "generate:frontline_new": "node scripts/frontline.js --action=new",
-    "generate:frontline_rebuild": "node scripts/frontline.js --action=rebuild"
+    "generate:frontline_update": "node scripts/frontline.js --action=new",
+    "generate:frontline_build": "node scripts/frontline.js --action=build"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@turf/turf": "^6.5.0",
+    "date-fns": "^2.30.0",
+    "minimist": "^1.2.8",
     "node-fetch": "^3.3.1",
     "npm-check-updates": "^16.10.12",
     "parse2-kmz": "^1.0.7"
